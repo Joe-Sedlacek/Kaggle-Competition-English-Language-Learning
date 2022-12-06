@@ -124,8 +124,6 @@ doc
 ```
 'you are not cool. You break precious things.'
 ```
-![code_snippet](./images/Example 3.png)
-
 
 Because the OOV now has a vector representation, if the same OOV appears again, it will not be replaced. Furthermore, in theory, the OOV could be used to replace another OOV. To counteract this, we then reset the spaCy word embeddings to their original values, which discards the OOV’s embedding. Thus, the OOV now cannot be used to replace other OOVs, and the OOV will be replaced each time it appears. With these measures in place, any essay which is sent to our function, will have misspelled words, non-English words, and nonsense words all replaced with actual English words which preserve the semantics of the essay. This results in all essays having a clean format which can be used to accurately calculate TF-IDF scores for all words used, resulting in accurate scoring of a student’s vocabulary. 
 
