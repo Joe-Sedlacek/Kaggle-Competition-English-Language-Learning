@@ -1,7 +1,5 @@
 # English Language Learning Vocabulary Scoring
-This post is an outline of the code seen in our respository. Our code is distributed between three files: "english-language-learning.ipynb" contains all the TF-IDF and Neural Network code, "OOV.ipynb" contains the Out of Vocabulary word detection code, and "visualization.ipynb" contains code for some of the graphs created. The data folder contains the data used in this project, images folder contains images of graphs and code, and lastly the models folder contains some of the trained models that we saved for future use. 
-
-## The Project:
+This post is an outline and description of the code seen in our respository. Our code is distributed between three files: "english-language-learning.ipynb" contains all the TF-IDF and Neural Network code, "OOV.ipynb" contains the Out of Vocabulary word detection code, and "visualization.ipynb" contains code for some of the graphs created. The data folder contains the data used in this project, images folder contains images of graphs and code, and lastly the models folder contains some of the trained models that we saved for future use. 
 
 ## Overview
 1. Introduction
