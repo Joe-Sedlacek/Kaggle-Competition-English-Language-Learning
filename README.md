@@ -103,6 +103,16 @@ doc=nlp("You are not cool. You destroy cawul objects.")
 doc=set_embedding_for_oov(doc)
 doc
 ```
+```
+Words predicted from forward sequence model:
+adverse
+know
+Words predicted from reverse sequence model:
+raise
+film
+brand
+green
+```
 ![code_snippet](./images/Example 3.png)
 
 
