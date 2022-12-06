@@ -89,7 +89,38 @@ For instance, let us say a student wrote the word “interesante” in an essay.
 
 At first, one would think, “simply remove the OOVs”. Though this sounds like a simple fix, this would actually degrade our vocabulary predictions. This is because a misspelled word also gets flagged for being an OOV; however, we do not want to remove misspelled words because more difficult words, such as “abhorrent”, are more likely to be misspelled than common words such as “the”. If we remove a misspelled “abhorrent”, then we would not be recognizing a student’s advanced vocabulary, thus we cannot remove any OOVs out of this fear. One might then say, simply “auto-correct” the English word like an iPhone. However, this would not work in our case either, for misspelled words are not the only “word” to be flagged as an OOV. In addition to misspelled words, words in other languages such as Spanish would also be flagged as OOVs as well as words that do not resemble any language (e.g. nonsense).
 
-In order to account for all of these cases (and more) which might yield an OOV, we decided it would be best to replace the OOV with a word that has similar semantics. For example, the word “u” might be replaced with “you”, the word “bueno” might be replaced with the word “good”, and the word “rejkhaivk” in “I like to eat rejkhaivk” might be replaced with “food”. How do we do this? First we need to be able predict a word’s semantics, specifically, an OOV word’s semantics. In order to do this, we first trained two LSTM models on a dataset which included IMDB reviews, offering examples of common English words that an english learner might use. Given an OOV in a corpus, these models were trained to predict what word the OOV is “meant to be”. One LSTM model analyzes text before the OOV (forward model) and the other LSTM model analyzes text after the OOV (reverse model), and both models return a list of words it believes should replace the OOV. This can be seen in the code snippet below: 
+In order to account for all of these cases (and more) which might yield an OOV, we decided it would be best to replace the OOV with a word that has similar semantics. For example, the word “u” might be replaced with “you”, the word “bueno” might be replaced with the word “good”, and the word “rejkhaivk” in “I like to eat rejkhaivk” might be replaced with “food”. How do we do this? First we need to be able predict a word’s semantics, specifically, an OOV word’s semantics. In order to do this, we first trained two LSTM models on a dataset which included IMDB reviews, offering examples of common English words that an english learner might use. The structure of the forward model can be seen below: 
+```
+model = Sequential()
+model.add(Embedding(vocab_size,100, input_length=max_length-1))
+#model.add(LSTM(100))
+model.add(Bidirectional(LSTM(100)))
+model.add(Dense(vocab_size, activation='softmax'))
+print(model.summary())
+
+```
+```
+Model: "sequential_18"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ embedding_18 (Embedding)    (None, 57, 100)           73600     
+                                                                 
+ bidirectional_18 (Bidirecti  (None, 200)              160800    
+ onal)                                                           
+                                                                 
+ dense_17 (Dense)            (None, 736)               147936    
+                                                                 
+=================================================================
+Total params: 382,336
+Trainable params: 382,336
+Non-trainable params: 0
+_________________________________________________________________
+None
+
+```
+
+Given an OOV in a corpus, these models were trained to predict what word the OOV is “meant to be”. One LSTM model analyzes text before the OOV (forward model) and the other LSTM model analyzes text after the OOV (reverse model), and both models return a list of words it believes should replace the OOV. This can be seen in the code snippet below: 
 
 ```
 doc=nlp("You are not cool. You destroy cawul objects.")
