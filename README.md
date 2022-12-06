@@ -93,7 +93,21 @@ In order to account for all of these cases (and more) which might yield an OOV, 
 
 How do we do this? First we need to be able predict a word’s semantics, specifically, an OOV word’s semantics. In order to do this, we first trained two LSTM models on the a dataset which included IMDB reviews, offering examples of common English words that an english learner might use. Given an OOV in a corpus, these models were trained to predict what word the OOV is “meant to be”. One LSTM model analyzes text before the OOV (forward model) and the other LSTM model analyzes text after the OOV (reverse model), and both models return a list of words it believes should replace the OOV.
 
-![code_snippet](./images/Example2.png)
+```
+doc=nlp("You are not cool. You destroy cawul objects.")
+doc=set_embedding_for_oov(doc)
+doc
+```
+```
+Words predicted from forward sequence model:
+adverse
+know
+Words predicted from reverse sequence model:
+raise
+film
+brand
+green
+```
 
 
 Each of these predicted words form the forward model and reverse model have a vector representation, or word embedding, provided by the spaCy library. We then iterate through both of these lists, take each word embedding, apply a logarithmic function to embedding, and sum the results across both lists. The OOV then gets assigned this summed value as its word embedding. Doing this essentially aims to capture where this OOV belongs in the vector space based off of where the predicted words exist in the vector space, which are in turn influenced by the context of the corpus before and after the OOV as analyzed by the forward and reverse models. Now that we have a vector for the OOV, we then use a spaCy function which finds the closest vector in the vector space to the OOV’s vector. We then take this closest vector, retrieve the word it represents, and we then swap the OOV with it. Because these two vectors were closest to each other in the vector space, they will also be the closest in semantics, therefore maintaining the semantics of the essay.
