@@ -31,7 +31,7 @@ The result of this formula is that words with high frequency in the current docu
 We selected this approach because we believed higher vocabulary scores would be given to writing with words that are not used as frequently. To test this theory, we used the TF-IDF vectorization of the training data, then trained a neural network with the vectorizations and the given vocabulary scores for each essay. With the data from Kaggle, we had 3,911 total essays. We did a 80/20 training/testing split on the data, so we had 3,128 essays for training and 783 essays for testing. 
 
 Our model was as follows:
----
+```
 model = Sequential([
     Dense(2000, activation='relu'),
     Dropout(0.5),
@@ -46,7 +46,7 @@ model = Sequential([
 model.compile(optimizer='adam',
                 loss='mse',
                 metrics=['mean_absolute_error'])
----
+```
 
 The mean-squared-error (MSE) training loss was 0.0298. However, we needed to test the network on the testing data to get an accurate representation of its success.
 
