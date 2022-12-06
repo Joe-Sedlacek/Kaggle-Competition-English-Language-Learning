@@ -37,7 +37,26 @@ We began to question the ways in which this model could be improved. In particul
 
 The second drawback that we identified is that the word understanding of ELLs is likely different from the word understanding of the graders, which we are training our network to imitate. Since we are using the TF-IDF to measure the use of words that are unique to a specific essay and not for the usually intended purpose of measuring the importance to a document, we thought of a new approach that could hopefully classify words as more common or less common through the use of the most commonly used English words, by all people, and not just ELLs. 
 
-For this new approach, we looked at a Kaggle dataset labeled “English Word Frequency” that contained the most common ⅓ million words in English on the web. For every word, it lists the frequency of the word as well. From this, we developed a new idea: creating a custom TF-IDF metric that took into consideration the number of times a word was used in a document and the frequency of the word in the English language. In order to find the new “inverse document frequency” statistic, we built it the way SKlearn. 
+For this new approach, we looked at a Kaggle dataset labeled “English Word Frequency” that contained the most common ⅓ million words in English on the web. For every word, it lists the frequency of the word as well. From this, we developed a new idea: creating a custom TF-IDF metric that took into consideration the number of times a word was used in a document and the frequency of the word in the English language. In order to find the new “inverse frequency” statistic, we built it similar to the way SKlearn computes the inverse document frequency over a corpus of documents. As a reminder, SKlearn computes IDF as:
+
+IDF is calculated by log base e ([1 + # documents] / [1 + # documents word appears in])
+To make a similar metric, in our approach, we take the highest frequency of a word, which is “the” with a frequency of 23,135,851,162 and use that as the numerator, and use the frequency of the word we are identifying as the denominator. We then take the log base e of this ratio. To test the plausibility of this approach, we look at two words: “from” and “ethnicity.” “From” is the 21st most occurring word with a frequency of 2,275,595,356 while “ethnicity” is the 10000th with a frequency of 5,055,334. The IDF scores for the two would be as follows:
+
+- “from”: log base e [(1 + 23135851162)/(1 + 2275595356)] = 2.32
+- “ethnicity”:  log base e [(1 + 23135851162)/(1 + 5055334)] = 8.43
+
+Looking further, the data set we collected contains more than 333,000 words. Knowing that it would be very difficult to encode and pass around vectors of that size, we wanted to calculate which threshold of words to store in the vector. Here is a graph displaying the data:
+
+![plot](./images/top_words_pie.png)
+
+As seen in the pie chart above, the majority of the words used by ELLs are in the 5,000 most frequent English words. If we take into consideration the top 50,000 words, we cover almost every word the ELLs use. Thus, we chose that as the size of our word pool. Since we could not use the SKlearn method, we needed to create code to take the words out of every essay. To do this, we had to clean each essay which consisted of:
+- Removing all punctuation
+- Converting all text to lowercase
+- Splitting on whitespace into an array of words
+
+Once we had the word pool for every essay, we iterated through and calculated the term frequency for each of the top 50,000 words. This step left us with two vectors, a TF vector of size 50,000 and the previously created IDF vector of size 50,000. To create the TF-IDF vector, we simply multiplied the two together and then normalized each sub-array. We then broke our data up into training and testing data sets with an 80/20 split. Since we wanted to compare this model to the previous model, we decided to use the same model structure as the previous step.
+
+After creating the model, the mean squared error for the training step was 0.2001. When we evaluated the model with the testing data set, we were scored with an MSE loss of 0.7591. To our dismay, this model did not perform as well as expected, since we had hypothesized it to be an improvement over the previous model. We believe a large attributor to this was that the model structure used to create this network was the same as the previous step. We believe that if we had created a larger network with either more hidden layers or a larger first layer, we would have been better able to account for the size of the input vector to the neural network. Yet, we still had other strategies that we wanted to try out.
 
 ## 4. Identification of “Out-of-Vocabulary Words”
 	
@@ -48,14 +67,10 @@ For instance, let us say a student wrote the word “fhaijklal” in an essay. T
 At first, one would think, “simply remove the OOVs”. Though this sounds like a simple fix, this would actually degrade our vocabulary predictions. This is because a misspelled word also gets flagged for being an OOV; however, we do not want to remove misspelled words because more difficult words, such as “abhorrent”, are more likely to be misspelled than common words such as “the”. If we remove a misspelled “abhorrent”, then we would not be recognizing a student’s advanced vocabulary, thus we cannot remove any OOVs out of this fear. One might then say, then simply “auto-correct” the English word like an iPhone can do. However, this would not work in our case either, for misspelled words are not the only “word” to be flagged as an OOV. In addition to misspelled words, words in other languages such as Spanish would also be flagged as OOVs as well as words that do not resemble any language (e.g. nonsense).
 
 In order to account for all of these cases (and more) which might yield an OOV, we decided it would be best to replace the OOV with a word that has similar semantics. For example, the word “u” might be replaced with “you”, the word “bueno” might be replaced with the word “good”, and the word “rejkhaivk” in “I like to eat rejkhaivk” might be replaced with “food”. This can be seen in an example below (show example of replacing “u” and some other stuff in a short sentence…format sentence so “that” makes sense”.
-	How did we do this? First, we 
 
-Why we do it 
+How do we do this? First we need to be able predict a word’s semantics, specifically, an OOV word’s semantics. In order to do this, we first trained two LSTM models on the a dataset which included IMDB reviews, offering examples of common English words that an english learner might use. Given an OOV in a corpus, these models were trained to predict what word the OOV is “meant to be”. One LSTM model analyzes text before the OOV (forward model) and the other LSTM model analyzes text after the OOV (reverse model), and both models return a list of words it believes should replace the OOV. Each of these predicted words form the forward model and reverse model have a vector representation, or word embedding, provided by the spaCy library. We then iterate through both of these lists, take each word embedding, apply a logarithmic function to embedding, and sum the results across both lists. The OOV then gets assigned this summed value as its word embedding. Doing this essentially aims to capture where this OOV belongs in the vector space based off of where the predicted words exist in the vector space, which are in turn influenced by the context of the corpus before and after the OOV as analyzed by the forward and reverse models. Now that we have a vector for the OOV, we then use a spaCy function which finds the closest vector in the vector space to the OOV’s vector. We then take this closest vector, retrieve the word it represents, and we then swap the OOV with it. Because these two vectors were closest to each other in the vector space, they will also be the closest in semantics, therefore maintaining the semantics of the essay.
 
-How we do it 
+Because the OOV now has a vector representation, if the same OOV appears again, it will not be replaced. Furthermore, in theory, the OOV could be used to replace another OOV. To counteract this, we then reset the spaCy word embeddings to their original values, which discards the OOV’s embedding. Thus, the OOV now cannot be used to replace other OOVs, and the OOV will be replaced each time it appears. With these measures in place, any essay which is sent to our function, will have misspelled words, non-English words, and nonsense words all replaced with actual English words which preserve the semantics of the essay. This results in all essays having a clean format which can be used to accurately calculate TF-IDF scores for all words used, resulting in accurate scoring of a student’s vocabulary. 
 
-Outcome 
-
-Considerations…
 
 ## 5. Conclusions and Future Directions
